@@ -1,0 +1,17 @@
+{
+  "generatedBy": "one typegen",
+  "packageId": "AppNative",
+  "hash": "5dc4a02f7049f63a7f88c867b2bd7922228242f775319db3b6bfaf5d21a94d51",
+  "files": {
+    "Device.swift": [
+      "Device"
+    ]
+  },
+  "modules": {
+    "Device": [
+      "info"
+    ]
+  },
+  "views": {},
+  "defaultViewFiles": []
+}

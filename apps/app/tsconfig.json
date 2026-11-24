@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    // Routes and screens are app code, not a published API: tsdown never emits
+    // declarations here, so explicit export annotations buy nothing.
+    "isolatedDeclarations": false,
+    "module": "Preserve",
+    "paths": { "~/*": ["./*"] },
+    "allowArbitraryExtensions": true,
+    // vite.config.ts imports app.identity.ts with its extension, as Vite's
+    // native config loader requires.
+    "allowImportingTsExtensions": true,
+    "types": ["node", "react", "vite/client"]
+  },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules", "dist", "ios", "ios.previous", "android"]
+}

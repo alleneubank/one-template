@@ -12,6 +12,20 @@
     "apps/*": {
       "entry": ["src/index.ts", "src/index.tsx", "src/main.ts", "src/main.tsx"],
       "project": ["src/**/*.ts", "src/**/*.tsx"]
+    },
+    "apps/app": {
+      "entry": ["app/**/*.{ts,tsx}", "vite.config.ts", "**/*.{ios,android,native,web}.{ts,tsx}"],
+      "project": ["**/*.{ts,tsx}"],
+      "vite": false,
+      "ignore": ["**/*.d.*.ts"],
+      "ignoreDependencies": [
+        "@react-native-community/template",
+        "@op-engineering/op-sqlite",
+        "react-native-nitro-image",
+        "react-native-nitro-modules",
+        "react-native-nitro-web-image",
+        "react-native-safe-area-context"
+      ]
     }
   },
   "ignoreDependencies": [],
