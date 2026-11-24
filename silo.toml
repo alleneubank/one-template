@@ -1,0 +1,14 @@
+version = 1
+
+[ports]
+WEB_PORT = 8081
+TILT_PORT = 10350
+
+[urls]
+WEB_URL = "http://localhost:${WEB_PORT}"
+
+[k3d]
+enabled = false
+
+[tilt]
+webMode = "prod"

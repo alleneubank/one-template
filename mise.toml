@@ -13,6 +13,17 @@ bun = "1.4.5"
 # 0.13.0 ships no macOS builds, so the weekly bump skips coreutils; see
 # .github/workflows/update-deps.yml.
 "aqua:uutils/coreutils" = "0.12.0"
+# silo runs each worktree's dev stack (Tilt, ports, simulator and emulator
+# slots); its Tilt integration needs janitor on PATH. silo needs a running
+# Docker engine (OrbStack on macOS) even without k3d.
+"npm:@0xbigboss/silo" = "1.4.0"
+"github:alleneubank/janitor" = "0.3.1"
+# One's CLI and dev server run on Node, not Bun's runtime.
+node = "24.22.3"
+# `bun run verify` drives the web app with agent-browser and the native apps
+# with agent-device.
+"npm:agent-browser" = "0.44.0"
+"npm:agent-device" = "0.21.42"
 
 [env]
 PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS = "{% if os() == 'linux' %}true{% else %}{{ get_env(name='PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS', default='') }}{% endif %}"

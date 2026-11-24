@@ -37,6 +37,10 @@ coverage/
 # direnv
 .direnv/
 
+# silo writes these into the worktree root while a stack is up
+.localnet.env
+.silo.lock
+
 # Logs
 *.log
 npm-debug.log*

@@ -151,6 +151,31 @@ url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-darwin-x6
 checksum = "sha256:fb0121739a7e80e7511b6bfe4d2116422b48ba18a013acadef0c425348e95891"
 url = "https://github.com/oven-sh/bun/releases/download/bun-v1.4.5/bun-darwin-x64-baseline.zip"
 
+[[tools."github:alleneubank/janitor"]]
+version = "0.3.1"
+backend = "github:alleneubank/janitor"
+specifiers = ["0.3.1"]
+
+[tools."github:alleneubank/janitor"."platforms.linux-arm64"]
+checksum = "sha256:e60f29d9297fd201de7dc095b72d960b05bf5d0e5669769dd32dc0c3cc8dd368"
+url = "https://github.com/alleneubank/janitor/releases/download/v0.3.1/janitor-0.3.1-linux-aarch64.tar.gz"
+url_api = "https://api.github.com/repos/alleneubank/janitor/releases/assets/540318277"
+
+[tools."github:alleneubank/janitor"."platforms.linux-x64"]
+checksum = "sha256:55fd9362fb3056a679cd8269377ae7560938a6b6c14d2a208b99384b536ea9bf"
+url = "https://github.com/alleneubank/janitor/releases/download/v0.3.1/janitor-0.3.1-linux-x86_64.tar.gz"
+url_api = "https://api.github.com/repos/alleneubank/janitor/releases/assets/540318274"
+
+[tools."github:alleneubank/janitor"."platforms.macos-arm64"]
+checksum = "sha256:331a9cb5040a5e059fe52f630788ba79099a117bf7f8c6973ff1af8ac12a03b6"
+url = "https://github.com/alleneubank/janitor/releases/download/v0.3.1/janitor-0.3.1-macos-arm64.zip"
+url_api = "https://api.github.com/repos/alleneubank/janitor/releases/assets/540318278"
+
+[tools."github:alleneubank/janitor"."platforms.macos-x64"]
+checksum = "sha256:30b6f7cad1c9085e8e5b1c2b4062a6d11a338d1ee9a49ac83bb68db1f331723b"
+url = "https://github.com/alleneubank/janitor/releases/download/v0.3.1/janitor-0.3.1-macos-x86_64.zip"
+url_api = "https://api.github.com/repos/alleneubank/janitor/releases/assets/540318294"
+
 [[tools."github:tilt-dev/tilt"]]
 version = "0.37.9"
 backend = "github:tilt-dev/tilt"
@@ -175,3 +200,42 @@ url_api = "https://api.github.com/repos/tilt-dev/tilt/releases/assets/745905426"
 checksum = "sha256:e8d6a3bddf0118fa1d46e1090608762d07b33cb0dab8578b17bf001979172ced"
 url = "https://github.com/tilt-dev/tilt/releases/download/v0.37.9/tilt.0.37.9.mac.x86_64.tar.gz"
 url_api = "https://api.github.com/repos/tilt-dev/tilt/releases/assets/745905439"
+
+[[tools.node]]
+version = "24.22.3"
+backend = "core:node"
+specifiers = ["24.22.3"]
+
+[tools.node."platforms.linux-arm64"]
+checksum = "sha256:261af2af250dfd7e9f25cf151d1b2713a0adf8f10a9ad116c4947f68627affe8"
+url = "https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-arm64.tar.gz"
+
+[tools.node."platforms.linux-x64"]
+checksum = "sha256:061ec3e3062115705b56b51fa9cc330ab50d34b6969387d4e4b1a50c6809acc2"
+url = "https://nodejs.org/dist/v24.22.3/node-v24.22.3-linux-x64.tar.gz"
+
+[tools.node."platforms.macos-arm64"]
+checksum = "sha256:ff6e17d4874b76d272212b908cc020d6e815fba5a6c7eaaa06add725840307fd"
+url = "https://nodejs.org/dist/v24.22.3/node-v24.22.3-darwin-arm64.tar.gz"
+
+[tools.node."platforms.macos-x64"]
+checksum = "sha256:977614af0504c81045e7fd85596dbca0e5f951b96681516dadafedcca8c447f7"
+url = "https://nodejs.org/dist/v24.22.3/node-v24.22.3-darwin-x64.tar.gz"
+
+[[tools."npm:@0xbigboss/silo"]]
+version = "1.4.0"
+aube = { path = ".mise/locks/npm-0xbigboss-silo/1.4.0", digest = "sha256:3bd4d416d0deffec6e62d7eb97832aab22acf807e6ad90e9e506b36d05a88acf" }
+backend = "npm:@0xbigboss/silo"
+specifiers = ["1.4.0"]
+
+[[tools."npm:agent-browser"]]
+version = "0.44.0"
+aube = { path = ".mise/locks/npm-agent-browser/0.44.0", digest = "sha256:831b2d02c8f4fd8ecf583128e4fde38c9b77b8431f70ace2a67b434de9bc897b" }
+backend = "npm:agent-browser"
+specifiers = ["0.44.0"]
+
+[[tools."npm:agent-device"]]
+version = "0.21.42"
+aube = { path = ".mise/locks/npm-agent-device/0.21.42", digest = "sha256:42cfbd65b0684463f642431402f4c61e0d5f60c2e22bda9347658fdedba4bf30" }
+backend = "npm:agent-device"
+specifiers = ["0.21.42"]
