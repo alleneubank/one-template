@@ -1,0 +1,88 @@
+name: Verify
+
+# Runs the app legs of `bun run verify`; ci.yml runs the static checks.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  web:
+    name: Web (silo + agent-browser)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: '2026.10.4'
+      - run: bun install --frozen-lockfile
+      - run: agent-browser install --with-deps
+      - run: bun run verify web
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-web
+          path: |
+            tmp/verify/*.png
+            tmp/verify/*.log
+          if-no-files-found: ignore
+
+  ios:
+    name: iOS (simulator + agent-device)
+    runs-on: macos-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: '2026.10.4'
+      - run: bun install --frozen-lockfile
+      # GitHub's macOS runners have no Docker engine, which silo needs.
+      - run: bun run verify ios --without-silo
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-ios
+          path: |
+            tmp/verify/*.png
+            tmp/verify/*.log
+          if-no-files-found: ignore
+
+  android:
+    name: Android (emulator + agent-device)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      VERIFY_ANDROID_IMAGE: system-images;android-35;google_apis;x86_64
+      ORG_GRADLE_PROJECT_reactNativeArchitectures: x86_64
+    steps:
+      - uses: actions/checkout@v4
+      - name: Enable KVM for the emulator
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Install the emulator and system image
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" emulator platform-tools "$VERIFY_ANDROID_IMAGE" > /dev/null
+      - run: echo "JAVA_HOME=$JAVA_HOME_21_X64" >> "$GITHUB_ENV"
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          version: '2026.10.4'
+      - run: bun install --frozen-lockfile
+      - run: bun run verify android
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verify-android
+          path: |
+            tmp/verify/*.png
+            tmp/verify/*.log
+          if-no-files-found: ignore
