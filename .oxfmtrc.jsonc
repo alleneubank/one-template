@@ -13,5 +13,6 @@
   "arrowParens": "always",
   "endOfLine": "lf",
   // Generated declarations (One typegen) are rewritten by their generator.
-  "ignorePatterns": ["**/*.d.ts", "**/*.d.*.ts", "**/.one-native-source.json"],
+  // mise writes the npm tools' lock sidecars and checks their digests.
+  "ignorePatterns": ["**/*.d.ts", "**/*.d.*.ts", "**/.one-native-source.json", ".mise/**"],
 }

@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 importers:
+
   .:
     dependencies:
       agent-device:
@@ -12,12 +13,10 @@ importers:
         version: 0.21.42
 
 packages:
+
   agent-device@0.21.42:
-    resolution:
-      {
-        integrity: sha512-EtLi20fyQfk6xRxpxFBSFwhfiC5J9NQWendT+K6ocPndz+CEMUGqYez+Pa+mfMF77EPG3RQfPdSbTc8MJKKiJw==,
-      }
-    engines: { node: '>=22.12' }
+    resolution: {integrity: sha512-EtLi20fyQfk6xRxpxFBSFwhfiC5J9NQWendT+K6ocPndz+CEMUGqYez+Pa+mfMF77EPG3RQfPdSbTc8MJKKiJw==}
+    engines: {node: '>=22.12'}
     hasBin: true
     peerDependencies:
       ai: ^6.0.0 || ^7.0.0
@@ -26,4 +25,5 @@ packages:
         optional: true
 
 snapshots:
+
   agent-device@0.21.42: {}

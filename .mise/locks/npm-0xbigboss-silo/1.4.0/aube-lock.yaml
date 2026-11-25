@@ -5,6 +5,7 @@ settings:
   excludeLinksFromLockfile: false
 
 importers:
+
   .:
     dependencies:
       '@0xbigboss/silo':
@@ -12,21 +13,17 @@ importers:
         version: 1.4.0
 
 packages:
+
   '@0xbigboss/silo@1.4.0':
-    resolution:
-      {
-        integrity: sha512-Y2ZfABBdzdXr9kVQ0irPrVGHKbXOSE9nPJ4Qy+43mWsGrt4lRj+oVQVtPdtb0WCwPm5vzmfSZGo4jJsQ3wlJjg==,
-      }
-    engines: { bun: 1.4.4 }
+    resolution: {integrity: sha512-Y2ZfABBdzdXr9kVQ0irPrVGHKbXOSE9nPJ4Qy+43mWsGrt4lRj+oVQVtPdtb0WCwPm5vzmfSZGo4jJsQ3wlJjg==}
+    engines: {bun: 1.4.4}
     hasBin: true
 
   zod@3.25.76:
-    resolution:
-      {
-        integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==,
-      }
+    resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
 
 snapshots:
+
   '@0xbigboss/silo@1.4.0':
     dependencies:
       zod: 3.25.76
