@@ -5,9 +5,13 @@
 //
 //   bun run verify                  every leg
 //   bun run verify static web       only the named legs
+//   bun run verify ios --without-silo
 //
-// The web and native legs share one dev server started with `silo up`. Each
-// native leg creates its own simulator or emulator and removes it afterwards.
+// The web and native legs share one dev server started with `silo up`, which
+// needs a running Docker engine. --without-silo starts `one dev` directly on
+// WEB_PORT (default 8081) instead, for hosts without Docker such as GitHub's
+// macOS runners. Each native leg creates its own simulator or emulator and
+// removes it afterwards.
 // Screenshots and logs go to tmp/verify/.
 
 import { mkdirSync, readFileSync, readdirSync, rmSync, existsSync } from 'node:fs'
@@ -90,13 +94,19 @@ async function waitFor(
   }
 }
 
-function parseLegs(args: readonly string[]): readonly Leg[] {
-  if (args.length === 0) return LEGS
-  const unknown = args.filter((arg) => !(LEGS as readonly string[]).includes(arg))
+type DevServerMode = 'silo' | 'direct'
+
+type Options = { legs: readonly Leg[]; devServer: DevServerMode }
+
+function parseOptions(args: readonly string[]): Options {
+  const devServer: DevServerMode = args.includes('--without-silo') ? 'direct' : 'silo'
+  const named = args.filter((arg) => arg !== '--without-silo')
+  const unknown = named.filter((arg) => !(LEGS as readonly string[]).includes(arg))
   if (unknown.length > 0) {
-    throw new Error(`unknown leg ${unknown.join(', ')}; choose from ${LEGS.join(', ')}`)
+    throw new Error(`unknown argument ${unknown.join(', ')}; choose legs from ${LEGS.join(', ')}`)
   }
-  return LEGS.filter((leg) => args.includes(leg))
+  const legs = named.length === 0 ? LEGS : LEGS.filter((leg) => named.includes(leg))
+  return { legs, devServer }
 }
 
 async function verifyStatic(): Promise<void> {
@@ -132,7 +142,7 @@ async function devServerReady(port: number): Promise<boolean> {
 
 // `silo up` stays in the foreground while Tilt runs, so it runs as a child
 // that `silo down` stops.
-async function startDevServer(): Promise<number> {
+async function startSiloDevServer(): Promise<number> {
   log('dev server: silo up')
   const silo = Bun.spawn(['silo', 'up'], {
     cwd: root,
@@ -149,11 +159,48 @@ async function startDevServer(): Promise<number> {
   })
 
   let port = 0
-  await waitFor('silo to assign WEB_PORT and the dev server to start', DEV_SERVER_TIMEOUT_MS, async () => {
-    if (silo.exitCode !== null) throw new Error(`silo up exited with ${silo.exitCode}`)
-    if (!existsSync(join(root, '.localnet.env'))) return false
-    port = Number(readSiloEnv().WEB_PORT)
-    return Number.isInteger(port) && port > 0 && (await devServerReady(port))
+  await waitFor(
+    'silo to assign WEB_PORT and the dev server to start',
+    DEV_SERVER_TIMEOUT_MS,
+    async () => {
+      if (silo.exitCode !== null) throw new Error(`silo up exited with ${silo.exitCode}`)
+      if (!existsSync(join(root, '.localnet.env'))) return false
+      port = Number(readSiloEnv().WEB_PORT)
+      return Number.isInteger(port) && port > 0 && (await devServerReady(port))
+    },
+  )
+  log(`dev server: ready on http://localhost:${port}`)
+  return port
+}
+
+// Runs `one dev` in its own process group, so cleanup stops the server and
+// every process it started.
+async function startDirectDevServer(): Promise<number> {
+  const port = Number(process.env.WEB_PORT ?? 8081)
+  log(`dev server: one dev on port ${port}`)
+  const server = Bun.spawn(['bun', 'run', 'dev'], {
+    cwd: appDir,
+    env: { ...process.env, WEB_PORT: String(port) },
+    stdio: [
+      'ignore',
+      Bun.file(join(outDir, 'dev-server.log')),
+      Bun.file(join(outDir, 'dev-server.err.log')),
+    ],
+    detached: true,
+  })
+  cleanups.push({
+    what: `dev server (process group ${server.pid})`,
+    run: async () => {
+      process.kill(-server.pid, 'SIGTERM')
+      const exited = await Promise.race([server.exited, Bun.sleep(MINUTE_MS).then(() => null)])
+      if (exited === null) process.kill(-server.pid, 'SIGKILL')
+      await server.exited
+    },
+  })
+  await waitFor(`the dev server on port ${port}`, DEV_SERVER_TIMEOUT_MS, async () => {
+    if (server.exitCode !== null)
+      throw new Error(`one dev exited with ${server.exitCode}; see dev-server.err.log`)
+    return devServerReady(port)
   })
   log(`dev server: ready on http://localhost:${port}`)
   return port
@@ -229,17 +276,37 @@ function compareVersions(a: string, b: string): number {
   return 0
 }
 
+type SimctlDeviceType = { identifier: string; name: string; minRuntimeVersionString: string }
+
+function newest<T>(items: readonly T[], version: (item: T) => string): T | undefined {
+  return items.reduce<T | undefined>(
+    (best, item) =>
+      best === undefined || compareVersions(version(item), version(best)) > 0 ? item : best,
+    undefined,
+  )
+}
+
 async function createSimulator(): Promise<string> {
-  const { runtimes } = JSON.parse(
-    await capture(['xcrun', 'simctl', 'list', '--json', 'runtimes'], { timeoutMs: MINUTE_MS }),
-  ) as { runtimes: SimctlRuntime[] }
-  const runtime = runtimes
-    .filter((candidate) => candidate.platform === 'iOS' && candidate.isAvailable)
-    .toSorted((a, b) => compareVersions(b.version, a.version))[0]
+  const { runtimes, devicetypes } = JSON.parse(
+    await capture(['xcrun', 'simctl', 'list', '--json', 'runtimes', 'devicetypes'], {
+      timeoutMs: MINUTE_MS,
+    }),
+  ) as { runtimes: SimctlRuntime[]; devicetypes: SimctlDeviceType[] }
+  const runtime = newest(
+    runtimes.filter((candidate) => candidate.platform === 'iOS' && candidate.isAvailable),
+    (candidate) => candidate.version,
+  )
   if (!runtime) throw new Error('no iOS simulator runtime is installed; install one in Xcode')
-  const deviceType = runtime.supportedDeviceTypes
-    .filter((type) => type.productFamily === 'iPhone')
-    .at(-1)
+  // The newest iPhone this runtime supports: the one with the highest minimum runtime.
+  const supported = new Set(
+    runtime.supportedDeviceTypes
+      .filter((type) => type.productFamily === 'iPhone')
+      .map((type) => type.identifier),
+  )
+  const deviceType = newest(
+    devicetypes.filter((type) => supported.has(type.identifier)),
+    (type) => type.minRuntimeVersionString,
+  )
   if (!deviceType) throw new Error(`runtime ${runtime.identifier} supports no iPhone`)
 
   const name = `verify-${runId}`
@@ -291,16 +358,18 @@ function androidImage(sdk: string): string {
   const abi = hostArch() === 'arm64' ? 'arm64-v8a' : 'x86_64'
   const imagesDir = join(sdk, 'system-images')
   const levels = existsSync(imagesDir)
-    ? readdirSync(imagesDir)
-        .filter((level) => existsSync(join(imagesDir, level, 'google_apis', abi)))
-        .toSorted((a, b) => Number(b.replace(/\D/g, '')) - Number(a.replace(/\D/g, '')))
+    ? readdirSync(imagesDir).filter((level) =>
+        existsSync(join(imagesDir, level, 'google_apis', abi)),
+      )
     : []
-  if (!levels[0]) {
+  // Directories are named android-<API level>.
+  const level = newest(levels, (name) => name.replace(/\D/g, ''))
+  if (!level) {
     throw new Error(
       `no google_apis ${abi} system image under ${imagesDir}; install one with sdkmanager`,
     )
   }
-  return `system-images;${levels[0]};google_apis;${abi}`
+  return `system-images;${level};google_apis;${abi}`
 }
 
 function portFree(port: number): Promise<boolean> {
@@ -428,7 +497,9 @@ async function verifyAndroid(port: number): Promise<void> {
 
 async function cleanUp(): Promise<boolean> {
   let clean = true
-  for (const cleanup of cleanups.toReversed()) {
+  // Undo in reverse order of setup.
+  for (let index = cleanups.length - 1; index >= 0; index--) {
+    const cleanup = cleanups[index]!
     try {
       await cleanup.run()
     } catch (error) {
@@ -442,7 +513,7 @@ async function cleanUp(): Promise<boolean> {
 }
 
 async function main(): Promise<void> {
-  const legs = parseLegs(process.argv.slice(2))
+  const { legs, devServer } = parseOptions(process.argv.slice(2))
   mkdirSync(outDir, { recursive: true })
   log(`legs: ${legs.join(', ')}; artifacts in ${outDir}`)
 
@@ -457,7 +528,7 @@ async function main(): Promise<void> {
     if (legs.includes('static')) await verifyStatic()
     const appLegs = legs.filter((leg) => leg !== 'static')
     if (appLegs.length > 0) {
-      const port = await startDevServer()
+      const port = devServer === 'silo' ? await startSiloDevServer() : await startDirectDevServer()
       if (legs.includes('web')) await verifyWeb(port)
       if (legs.includes('ios')) await verifyIos(port)
       if (legs.includes('android')) await verifyAndroid(port)
