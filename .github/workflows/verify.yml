@@ -38,9 +38,17 @@ jobs:
   ios:
     name: iOS (simulator + agent-device)
     runs-on: macos-latest
-    timeout-minutes: 90
+    # A cold run took 90 minutes: about 20 generating One's iOS SDK bindings
+    # and about 60 in xcodebuild.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
+      # One caches the generated iOS SDK bindings here, keyed by its version.
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/one
+          key: one-ios-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+          restore-keys: one-ios-${{ runner.os }}-
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           version: '2026.10.4'
